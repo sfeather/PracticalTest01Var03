@@ -2,8 +2,12 @@ package ro.pub.cs.systems.eim.practicaltest01var03;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -18,6 +22,8 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
     private EditText secondNumberEditText;
     private TextView resultTextView;
 
+    private boolean serviceHasStarted = false;
+
     private int result;
 
     public static boolean isNumeric(String str) {
@@ -28,6 +34,16 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
             return false;
         }
     }
+
+    private class MessageBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("[MessageBroadcastReceiver]", intent.getStringExtra("ro.pub.cs.systems.eim.practicaltest01.message"));
+        }
+    }
+
+    private MessageBroadcastReceiver messageBroadcastReceiver = new MessageBroadcastReceiver();
+    private IntentFilter intentFilter = new IntentFilter();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +71,8 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
             result = firstNumber + secondNumber;
 
             resultTextView.setText(Integer.toString(firstNumber) + " + " + Integer.toString(secondNumber) + " = " + Integer.toString(result));
+
+            startServicePracticalTest01();
         });
 
         minusButton.setOnClickListener(it -> {
@@ -69,6 +87,8 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
             result = firstNumber - secondNumber;
 
             resultTextView.setText(Integer.toString(firstNumber) + " - " + Integer.toString(secondNumber) + " = " + Integer.toString(result));
+
+            startServicePracticalTest01();
         });
 
         navigateToSecondaryActivityButton.setOnClickListener(it -> {
@@ -76,6 +96,26 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
             intent.putExtra("result", result);
             startActivityForResult(intent, 1);
         });
+
+        intentFilter.addAction("ro.pub.cs.systems.eim.practicaltest01.broadcastreceiver.sum");
+        intentFilter.addAction("ro.pub.cs.systems.eim.practicaltest01.broadcastreceiver.difference");
+    }
+
+    private void startServicePracticalTest01() {
+        int value1 = Integer.parseInt(firstNumberEditText.getText().toString());
+        int value2 = Integer.parseInt(secondNumberEditText.getText().toString());
+
+        if (serviceHasStarted) {
+            return;
+        }
+
+        serviceHasStarted = true;
+
+        Intent intent = new Intent(getApplicationContext(), PracticalTest01Var03Service.class);
+        intent.putExtra("value1", value1);
+        intent.putExtra("value2", value2);
+
+        getApplicationContext().startService(intent);
     }
 
     @Override
@@ -118,5 +158,26 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
             else
                 Toast.makeText(this, "UNKNOWN", Toast.LENGTH_LONG).show();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(messageBroadcastReceiver, new IntentFilter("ro.pub.cs.systems.eim.practicaltest01.broadcastreceiver.sum"));
+//        registerReceiver(messageBroadcastReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(messageBroadcastReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        System.out.println("DESTROY");
+        super.onDestroy();
+        Intent intent = new Intent(getApplicationContext(), PracticalTest01Var03Service.class);
+        getApplicationContext().stopService(intent);
     }
 }
