@@ -2,6 +2,7 @@ package ro.pub.cs.systems.eim.practicaltest01var03;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -12,9 +13,12 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
 
     private Button plusButton;
     private Button minusButton;
+    private Button navigateToSecondaryActivityButton;
     private EditText firstNumberEditText;
     private EditText secondNumberEditText;
     private TextView resultTextView;
+
+    private int result;
 
     public static boolean isNumeric(String str) {
         try {
@@ -32,6 +36,7 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
 
         plusButton = (Button)findViewById(R.id.plus_button);
         minusButton = (Button)findViewById(R.id.minus_button);
+        navigateToSecondaryActivityButton = (Button)findViewById(R.id.navigate_to_secondary_activity_button);
 
         firstNumberEditText = (EditText)findViewById(R.id.first_number_edit_text);
         secondNumberEditText = (EditText)findViewById(R.id.second_number_edit_text);
@@ -46,7 +51,10 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
 
             int firstNumber = Integer.parseInt(firstNumberEditText.getText().toString());
             int secondNumber = Integer.parseInt(secondNumberEditText.getText().toString());
-            resultTextView.setText(Integer.toString(firstNumber) + " + " + Integer.toString(secondNumber) + " = " + Integer.toString(firstNumber + secondNumber));
+
+            result = firstNumber + secondNumber;
+
+            resultTextView.setText(Integer.toString(firstNumber) + " + " + Integer.toString(secondNumber) + " = " + Integer.toString(result));
         });
 
         minusButton.setOnClickListener(it -> {
@@ -57,7 +65,16 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
 
             int firstNumber = Integer.parseInt(firstNumberEditText.getText().toString());
             int secondNumber = Integer.parseInt(secondNumberEditText.getText().toString());
-            resultTextView.setText(Integer.toString(firstNumber) + " - " + Integer.toString(secondNumber) + " = " + Integer.toString(firstNumber - secondNumber));
+
+            result = firstNumber - secondNumber;
+
+            resultTextView.setText(Integer.toString(firstNumber) + " - " + Integer.toString(secondNumber) + " = " + Integer.toString(result));
+        });
+
+        navigateToSecondaryActivityButton.setOnClickListener(it -> {
+            Intent intent = new Intent(getApplicationContext(), PracticalTest01Var03SecondaryActivity.class);
+            intent.putExtra("result", result);
+            startActivityForResult(intent, 1);
         });
     }
 
@@ -87,5 +104,19 @@ public class PracticalTest01Var03MainActivity extends AppCompatActivity {
         }
 
         Toast.makeText(this, "First: " + savedInstanceState.getString("first_number") + " Second: " + savedInstanceState.getString("second_number") + " Result: " + savedInstanceState.getString("result_number"), Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1) {
+            if (resultCode == RESULT_OK)
+                Toast.makeText(this, "CORRECT", Toast.LENGTH_LONG).show();
+            else if (resultCode == RESULT_CANCELED)
+                Toast.makeText(this, "INCORRECT", Toast.LENGTH_LONG).show();
+            else
+                Toast.makeText(this, "UNKNOWN", Toast.LENGTH_LONG).show();
+        }
     }
 }
